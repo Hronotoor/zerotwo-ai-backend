@@ -16,11 +16,21 @@ const AGENT_ID = "ag:fff2a3f7:20251012:untitled-agent:4a81e5a0";
 // Основной маршрут
 app.post("/ask", async (req, res) => {
   try {
-    const { gender, age, allergies, diagnosis, prescriptions, conversation_id } = req.body;
+    const {
+      gender,
+      age,
+      allergies,
+      diagnosis,
+      prescriptions,
+      other,
+      conversation_id,
+    } = req.body;
 
     // Проверяем заполненность полей
     if (!gender || !age || !allergies || !diagnosis || !prescriptions) {
-      return res.status(400).json({ error: "Все поля обязательны для заполнения." });
+      return res
+        .status(400)
+        .json({ error: "Все поля обязательны для заполнения." });
     }
 
     // Проверяем наличие API ключа
@@ -39,6 +49,7 @@ app.post("/ask", async (req, res) => {
 - Аллергические реакции: ${allergies}
 - Диагноз: ${diagnosis}
 - Назначения: ${prescriptions}
+${other ? `- Дополнительная информация: ${other}` : ""}
 `;
 
     console.log("📨 Отправка запроса к Mistral Agents API...");
@@ -50,8 +61,8 @@ app.post("/ask", async (req, res) => {
         inputs: userMessage,
         agent_id: AGENT_ID,
         stream: false,
-        store: true, 
-        conversation_id: conversation_id || undefined, 
+        store: true,
+        conversation_id: conversation_id || undefined,
       },
       {
         headers: {
@@ -84,13 +95,19 @@ app.post("/ask", async (req, res) => {
       conversation_id: data.conversation_id ?? null,
     });
   } catch (error) {
-    console.error("❌ Ошибка при работе с Mistral Agents API:", error?.response?.data || error);
+    console.error(
+      "❌ Ошибка при работе с Mistral Agents API:",
+      error?.response?.data || error
+    );
 
     let errorMessage = "Произошла ошибка при обработке запроса";
     if (error?.response?.status === 401) errorMessage = "Неверный API ключ";
-    else if (error?.response?.status === 429) errorMessage = "Превышен лимит запросов";
-    else if (error?.code === "ECONNREFUSED") errorMessage = "Не удалось подключиться к API";
-    else if (error?.response?.status === 404) errorMessage = "API endpoint не найден";
+    else if (error?.response?.status === 429)
+      errorMessage = "Превышен лимит запросов";
+    else if (error?.code === "ECONNREFUSED")
+      errorMessage = "Не удалось подключиться к API";
+    else if (error?.response?.status === 404)
+      errorMessage = "API endpoint не найден";
 
     res.status(500).json({
       success: false,
